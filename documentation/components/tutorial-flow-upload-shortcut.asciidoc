@@ -1,0 +1,62 @@
+---
+title: Shortcuts
+order: 7
+layout: page
+---
+
+= Shortcuts
+
+== Overview
+
+Shortcut feature enhances the developer with the ability of creating custom keyboard shortcuts and receive the notification when the shortcuts are used.
+
+== Using Shortcuts
+
+The API for is defined as `HasShortcut` mixin. By default it also comes as part of `Focusable`, so any focusable component is allowed to generate shortcut events. Alternatively, `Focusable` or `HasShortcut` may be implemented in any subclass.
+Here is a simple usecase where we want to add a shortcut on a `TestField`:
+
+[source, java]
+----
+TextField username = new TextField();
+username.addShortcut(Shortcut.of(Key.ENTER), this::login);
+----
+
+`Shortcut` class class defines the shortcut and besides the actual combination of keys it also contains options to alter the browser default action and propagation of the event. By default, browser's `preventDefault` is used while `stopPropagation` is ignored. Use `Shortcut::allowDefault()` to allow the browser default action of the event.
+
+In general browser events is a complex topic. In order to generate events, a tag must be focusable by setting its `tabindex` property. For `div`s or other noninput tags, a good practice is to set the `tabindex="-1"` since a negative value will not include it in the tab sequence. `Shortcut` offers support by allowing to specify a list of sources for the event, beside the component where the event is registered.
+
+Also we added support for `ClickNotifier`. A `ClickEvent` listener may be registered together with a `Shortcut`.
+
+A good example demonstrating both `Shortcut::setSources` and `ClickNotifier` would be as follow:
+[source, java]
+----
+TextField username = new TextField();
+TextField password = new TextField();
+Button login = new Button();
+login.addClickListener(Shortcut.of(Key.ENTER).setSources(username, password), event -> login());
+----
+
+In case we want to add the shortcut listener on a layout, the layout must implement at least `HasShortcut`, as follow:
+[source, java]
+----
+public class LoginScreen extends FlexLayout implements HasShortcut {
+
+  public LoginScreen() {
+    this.addShortcut(Shortcut.of(Key.ENTER), this::login);
+  }
+
+}
+----
+
+However, a solution which allowing us to avoid implementing `HasShortcut` would be to add the layout as an additional source of the event and add the event to eg. the component responsible for the form action, as follow:
+[source, java]
+----
+public class LoginScreen extends FlexLayout {
+
+  public LoginScreen() {
+    Button login = new Button();
+    login.addClickListener(Shortcut.of(Key.ENTER).setSources(this), event -> login());
+  }
+
+}
+----

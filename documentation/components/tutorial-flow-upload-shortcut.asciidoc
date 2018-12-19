@@ -12,8 +12,9 @@ Shortcut feature enhances the developer with the ability of creating custom keyb
 
 == Using Shortcuts
 
-The API for is defined as `HasShortcut` mixin. By default it also comes as part of `Focusable`, so any focusable component is allowed to generate shortcut events. Alternatively, `Focusable` or `HasShortcut` may be implemented in any subclass.
-Here is a simple usecase where we want to add a shortcut on a `TestField`:
+The API is defined as `ShortcutNotifier` mixin. By default it also comes as part of `Focusable`, so any focusable component is allowed to notify about shortcut events received from itself or its children. Alternatively, `Focusable` or `ShortcutNotifier` may be implemented in any subclass.
+
+Here is a simple usecase where we want to add a shortcut on a `TextField`:
 
 [source, java]
 ----
@@ -21,13 +22,16 @@ TextField username = new TextField();
 username.addShortcut(Shortcut.of(Key.ENTER), this::login);
 ----
 
-`Shortcut` class class defines the shortcut and besides the actual combination of keys it also contains options to alter the browser default action and propagation of the event. By default, browser's `preventDefault` is used while `stopPropagation` is ignored. Use `Shortcut::allowDefault()` to allow the browser default action of the event.
+`Shortcut` class defines the shortcut and besides the actual combination of keys it also contains options to alter the browser default action and propagation of the event. By default, browser's `preventDefault` is used while `stopPropagation` is ignored. Use `Shortcut::allowDefault()` to allow the browser default action of the event.
 
-In general browser events is a complex topic. In order to generate events, a tag must be focusable by setting its `tabindex` property. For `div`s or other noninput tags, a good practice is to set the `tabindex="-1"` since a negative value will not include it in the tab sequence. `Shortcut` offers support by allowing to specify a list of sources for the event, beside the component where the event is registered.
+`Shortcut` also offers support by allowing to specify a list of sources for the event, beside the component where the event is registered.
+
+In general browser events is a complex topic. In order to generate events, a non-input tag must be focusable by setting its `tabindex` property. For `div`s or other non-input tags, a good practice is to set the `tabindex="-1"` since a negative value will not include it in the tab sequence.
 
 Also we added support for `ClickNotifier`. A `ClickEvent` listener may be registered together with a `Shortcut`.
 
 A good example demonstrating both `Shortcut::setSources` and `ClickNotifier` would be as follow:
+
 [source, java]
 ----
 TextField username = new TextField();
@@ -36,27 +40,71 @@ Button login = new Button();
 login.addClickListener(Shortcut.of(Key.ENTER).setSources(username, password), event -> login());
 ----
 
-In case we want to add the shortcut listener on a layout, the layout must implement at least `HasShortcut`, as follow:
+In case we want to add the shortcut listener on a layout, the layout must implement `ShortcutNotifier`. However the shortcut will work only if either `username`, `password` or `button` fields are focused while user is using the shortcut:
+
 [source, java]
 ----
-public class LoginScreen extends FlexLayout implements HasShortcut {
+public class LoginScreen extends FlexLayout implements ShortcutNotifier {
 
   public LoginScreen() {
+    TextField username = new TextField();
+    TextField password = new TextField();
+    Button login = new Button();
+
+    add(username);
+    add(password);
+    add(login);
+
     this.addShortcut(Shortcut.of(Key.ENTER), this::login);
   }
 
+  private void login() {
+    // Login goes here.
+  }
 }
 ----
 
-However, a solution which allowing us to avoid implementing `HasShortcut` would be to add the layout as an additional source of the event and add the event to eg. the component responsible for the form action, as follow:
+Other use case is when without implementing `ShortcutNotifier` on the layout, we're adding it as an additional source and register the `Shortcut` on eg. the component responsible for the form action. However as in the previous example the shortcut will work only if either `username`, `password` or `button` fields are focused:
+
 [source, java]
 ----
 public class LoginScreen extends FlexLayout {
 
   public LoginScreen() {
+    TextField username = new TextField();
+    TextField password = new TextField();
     Button login = new Button();
+
+    add(username);
+    add(password);
+    add(login);
+
     login.addClickListener(Shortcut.of(Key.ENTER).setSources(this), event -> login());
   }
+
+  private void login() {
+    // Login goes here.
+  }
+
+}
+----
+
+In order to receive the event when none of the input fields are focused, but user clicks somewhere on the form area itself, we need to implement `Focusable` and set the `tabIndes` to eg. -1:
+
+[source, java]
+----
+public class LoginScreen extends FlexLayout implements Focusable {
+
+  public LoginScreen() {
+    // ...
+
+    setTabIndex(-1);
+
+    // This removes the focus style when user clicks it.
+    component.getElement().getStyle().set("outline", "none");
+  }
+
+  // ...
 
 }
 ----

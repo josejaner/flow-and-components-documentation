@@ -64,7 +64,7 @@ public class LoginScreen extends FlexLayout implements ShortcutNotifier {
 }
 ----
 
-Other use case is when without implementing `ShortcutNotifier` on the layout, we're adding it as an additional source and register the `Shortcut` on eg. the component responsible for the form action. However as in the previous example the shortcut will work only if either `username`, `password` or `button` fields are focused:
+Instead of implementing `ShortcutNotifier` on the layout, we can add the layout as a source for the `Shortcut` when adding a click listener for the `login` button. As in the previous example the shortcut will work only if either `username`, `password` or `button` field is focused:
 
 [source, java]
 ----
@@ -79,7 +79,9 @@ public class LoginScreen extends FlexLayout {
     add(password);
     add(login);
 
-    login.addClickListener(Shortcut.of(Key.ENTER).setSources(this), event -> login());
+    // notice the layout as a source for the shortcut. The shortcut will only
+    // get triggered when used from a focused field inside the layout
+    login.addClickListener(event -> login(), Shortcut.of(Key.ENTER).setSources(this));
   }
 
   private void login() {

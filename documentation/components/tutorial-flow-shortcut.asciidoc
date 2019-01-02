@@ -26,7 +26,7 @@ username.addShortcut(Shortcut.of(Key.ENTER), this::login);
 
 `Shortcut` also offers support by allowing to specify a list of sources for the event, beside the component where the event is registered.
 
-In general browser events is a complex topic. In order to generate events, a non-input tag must be focusable by setting its `tabindex` property. For `div`s or other non-input tags, a good practice is to set the `tabindex="-1"` since a negative value will not include it in the tab sequence.
+In general browser events is a complex topic. In order to generate events, a non-input tag must be focusable by setting its `tabindex` property. For `div` s or other non-input tags, a good practice is to set the `tabindex="-1"` since a negative value will not include it in the tab sequence.
 
 Also we added support for `ClickNotifier`. A `ClickEvent` listener may be registered together with a `Shortcut`.
 
